@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434" # expose ke host
+    volumes:
+      - ./ollama:/root/.ollama # simpan model di host biar nggak download ulang
+    restart: unless-stopped
+
+  dotnet-api:
+    build: ./AiSummarizer
+    container_name: ai-summarizer
+    depends_on:
+      - ollama
+    ports:
+      - "5000:8080" # expose API .NET
+    environment:
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
+      - OLLAMA_API=http://ollama:11434 # ENV untuk akses ollama lewat network docker
+    restart: unless-stopped
